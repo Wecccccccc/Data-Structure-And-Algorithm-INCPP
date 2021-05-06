@@ -1,3 +1,6 @@
+/*注意:
+写Delete_all要稍微注意一下，先判断tail是否为空，只有不为空时才能拿某个指针指向其next域*/
+
 #include <iostream>
 using namespace std;
 typedef int ElemType;
