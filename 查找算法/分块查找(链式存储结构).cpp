@@ -1,13 +1,13 @@
 #include <iostream>
-#include <algorithm>
 using namespace std;
 const int INFMIN = -999999;
-const int Maxsize = 30;
-bool cmp1(IdxNode a, IdxNode b);
+
+
 class Node
 {
-	friend bool cmp1(IdxNode a, IdxNode b);
-	friend class Idxtab;
+	friend class IdxTab;
+public:
+		Node() :next(nullptr) {};
 private:
 	int w;
 	Node *next;
@@ -15,276 +15,202 @@ private:
 
 class IdxNode
 {
-	friend bool cmp1(IdxNode a, IdxNode b);
-	friend class Idxtab;
+	friend class IdxTab;
 private:
 	int maxk;
-	Node *fidx;//块链头指针
+	Node *fidx;
 };
 
-class Idxtab
+class IdxTab
 {
-	friend bool cmp1(IdxNode a, IdxNode b);
 public:
 	void CreateList();
-	void PrintList();
-	bool Find_Node(int k);//查找是否有元素k,有则返回true，无则返回false
-	int Idx_Node(int k);//得到元素k的序号，序号从1开始
-	bool Insert_Node_front(int k, int w);//往第一个值为k的元素前面插入元素w
-	bool Insert_Node_back(int k, int w);//往第一个值为k的元素后面插入元素w
-	bool Delete_Node(int k);//删除第一个值为k的元素
+	void Prient_Elem_maxk();
+	void Print_Elem_w();
+	bool Find_Elem(int k);
+	bool Insert(int k);
+	bool Delete(int k);
 private:
-	IdxNode elem[Maxsize];
+	IdxNode *elem;
 	int len;
-	int N;
 };
 
-void Idxtab::CreateList()
+void IdxTab::CreateList()
 {
 	Node *p;
-	cout << "请输入要输入的数的个数" << endl;
 	int n;
+	int N;
+	cout << "请输入要存储的数的个数" << endl;
 	cin >> n;
-	cout << "请输入每大份中有多少小份" << endl;
+	cout << "请输入每大块中每小块的数目是多少" << endl;
 	cin >> N;
-	int m = (n / N) + 1;//计算查找表要用的节点个数
-	int ms = n % N;//查找表最后的那个要用的节点要连的数的个数
+	int m = (n / N) + 1;
 	len = m;
+	elem = new IdxNode[m + 1];
+	for (int i = 0; i < m + 1; i++) elem[i].fidx = nullptr;
+	int cnt = 0;//计数器
 	for (int i = 1; i <= len; i++)
 	{
-		elem[i].fidx = nullptr;
-	}
-	int cnt = 0;
-	int j = 1;
-	Node *q;
-	Node *head = new Node;
-	q = head;
-	int maxv = INFMIN;
-	cout << "请依次输入" << n << "个要存储的数" << endl;
-	for (int i = 0; i < n; i++)
-	{
-		cnt++;
-		p = new Node;
-		cin >> p->w;
-		if ((p->w) > maxv) maxv = p->w;
-		q->next = p;
-		q = p;
-		if (cnt%N == 0 && cnt< n-ms)/*cnt >= n-ms,就说明要连的是查找表最后一个要用的节点，
-									我们就特殊处理最后查找表那个节点的情况*/
+		elem[i].maxk = INFMIN;
+		for (int j = 1; j <= N && cnt < n; j++)
 		{
-			elem[j].maxk = maxv;
-			maxv = INFMIN;
-			elem[j].fidx = head->next;
-			q->next = nullptr;
-			q = head;
-			j++;
+			cnt++;
+			p = new Node;
+			int tmp;
+			cin >>tmp;
+			p->w = tmp;
+			p->next = elem[i].fidx;
+			elem[i].fidx = p;
+			if (tmp > elem[i].maxk) elem[i].maxk = tmp;
 		}
 	}
-	j++;
-	elem[j].maxk = maxv;
-	maxv = INFMIN;
-	elem[j].fidx = head->next;
-	q->next = nullptr;
-	delete head;
-	head = nullptr;
 }
 
-bool Idxtab::Find_Node(int k)
+bool IdxTab::Find_Elem(int k)
 {
-	Node *p;
+	if (k > elem[len].maxk) return false;
 	int j = 1;
 	while (elem[j].maxk < k) j++;
-	if (j > len) return false;
-	for (p = elem[j].fidx; p; p = p->next)
+	Node *p;
+	for (p = elem[j].fidx;p;p = p->next)
 	{
-		if (p->w == k) return true;
+		if ((p->w) == k) return true;
 	}
 	return false;
 }
 
-int Idxtab::Idx_Node(int k)
+bool IdxTab::Insert(int k)
 {
-	Node *p;
-	if (k > elem[len].maxk) return 0;
+	Node *s;
 	int j = 1;
-	for (int i = 1; i <= len; i++)
+	if (k > elem[len].maxk)
 	{
-		for (p = elem[i].fidx; p; p = p->next)
-		{
-			if ((p->w) == k) return j;
-			j++;
-		}
-	}
-	return 0;
-}
-
-bool Idxtab::Insert_Node_front(int k,int w)
-{
-	Node *p,*q;
-	int j = 1;
-	if (k > elem[len].maxk) return false;
-	while (elem[j].maxk < k)j++;
-	p = elem[j].fidx;
-	if ((p->w) == k)//因为没有空白头节点，特判一下最开始这个节点
-	{
-		q = new Node;
-		q->w = w;
-		q->next = elem[j].fidx;
-		elem[j].fidx = q;
-		if (w > elem[j].maxk)
-		{
-			elem[j].maxk = w;//更新最大关键字
-			sort(elem + 1, elem + 1 + len, cmp1);
-		}
+		s = new Node;
+		s->w = k;
+		s->next = elem[len].fidx;
+		elem[len].fidx = s;
+		elem[len].maxk = k;
 		return true;
 	}
 	else
-	{
-		while (p->next && p->next->w!=k)
-			p = p->next;
-		if (p->next)
-		{
-			q = new Node;
-			q->w = w;
-			q->next = p->next;
-			p->next = q;
-			if (w > elem[j].maxk)
-			{
-				elem[j].maxk = w;//更新最大关键字
-				sort(elem + 1, elem +1 + len, cmp1);
-			}
-		}
-		else
-			return false;
-	}
+		while (elem[j].maxk < k) j++;
+	s = new Node;
+	s->w = k;
+	s->next = elem[j].fidx;
+	elem[j].fidx = s;
+	return true;
 }
 
-bool cmp1(IdxNode a, IdxNode b)
+bool IdxTab::Delete(int k)
 {
-	return a.maxk < b.maxk;
-}
-
-bool Idxtab::Insert_Node_back(int k, int w)
-{
-	Node *p;
-	int j = 1;
-	if (elem[len].maxk < k) return false;
-	while (elem[j].maxk < k) j++;
-	for (p = elem[j].fidx; p; p = p->next)
-	{
-		if ((p->w) == k)
-		{
-			Node *q = new Node;
-			q->w = w;
-			q->next = p->next;
-			p->next = q;
-			if (w > elem[j].maxk)
-			{
-				elem[j].maxk = w;//更新最大关键字
-				sort(elem + 1, elem + 1 + len, cmp);
-			}
-			return true;
-		}
-	}
-	return false;
-}
-
-
-bool Idxtab::Delete_Node(int k)
-{
-	Node *p,*q;
-	int j = 1;
 	if (k > elem[len].maxk) return false;
+	int j = 1;
 	while (elem[j].maxk < k) j++;
+	Node *p, *q;
 	p = elem[j].fidx;
-	int tmp = p->w;
-	if ((p->w) == k)//因为没有空白头节点，特判一下最开始这个节点
+	if ((p->w) == k)
 	{
-		q = p->next;
-		elem[j].fidx = q;
+		elem[j].fidx = p->next;
 		delete p;
-		if (tmp == elem[j].maxk)
+		if (k == elem[j].maxk)
 		{
-			Node *s;
-			int maxv = INFMIN;
-			for (s = elem[j].fidx; s; s = s->next)
+			elem[j].maxk = INFMIN;
+			for (p = elem[j].fidx; p; p = p->next)
 			{
-				if (s->w > maxv) maxv = s->w;
+				if ((p->w) > elem[j].maxk) elem[j].maxk = p->w;
 			}
-			elem[j].maxk = maxv;
-			sort(elem + 1, elem + 1 + len, cmp);
-		}
-		return true;
-	}
-	else
-	{
-		while (p->next && p->next->w != k)
-			p = p->next;
-		int tmp = p->next->w;
-		if (p->next)
-		{
-			q = p->next;
-			p->next = q->next;
-			delete q;
-			if (tmp == elem[j].maxk)
+			if (j == len) return true;
+			int d = 1;
+			while (elem[d].maxk > elem[d + 1].maxk && d <= len-1)
 			{
+				int tmp_e = elem[d].maxk;
+				elem[d].maxk = elem[d + 1].maxk;
+				elem[d + 1].maxk = tmp_e;
 				Node *s;
-				int maxv = INFMIN;
-				for (s = elem[j].fidx; s; s = s->next)
-				{
-					if (s->w > maxv) maxv = s->w;
-				}
-				elem[j].maxk = maxv;
-				sort(elem + 1, elem + 1 + len, cmp);
+				s = elem[d].fidx;
+				elem[d].fidx = elem[d + 1].fidx;
+				elem[d + 1].fidx = s;
+				d++;
 			}
 			return true;
 		}
-		else
-			return false;
 	}
+	else
+		for (q = elem[j].fidx; q->next; q = q->next)
+		{
+			if ((q->next->w) == k)
+			{
+				p = q->next;
+				q->next = p->next;
+				delete p;
+				if (k == elem[j].maxk)
+				{
+					elem[j].maxk = INFMIN;
+					for (p = elem[j].fidx; p; p = p->next)
+					{
+						if ((p->w) > elem[j].maxk) elem[j].maxk = p->w;
+					}
+					if (j == len) return true;
+					int d = 1;
+					while (elem[d].maxk > elem[d + 1].maxk && d <= len - 1)
+					{
+						int tmp_e = elem[d].maxk;
+						elem[d].maxk = elem[d + 1].maxk;
+						elem[d + 1].maxk = tmp_e;
+						Node *s;
+						s = elem[d].fidx;
+						elem[d].fidx = elem[d + 1].fidx;
+						elem[d + 1].fidx = s;
+						d++;
+					}
+				}
+				return true;
+			}
+		}
+	return false;
 }
 
-void Idxtab::PrintList()
+void IdxTab::Print_Elem_w()
 {
 	Node *p;
 	for (int i = 1; i <= len; i++)
 	{
-		for (p = elem[i].fidx; p; p = p->next)
-			cout << p->w << " ";
+		for (p = elem[i].fidx; p; p = p->next) cout << p->w << " ";
 	}
 	cout << endl;
 }
 
+void IdxTab::Prient_Elem_maxk()
+{
+	for (int i = 1; i <= len; i++) cout << elem[i].maxk << " ";
+	cout << endl;
+}
+
+
 
 int main()
 {
-	Idxtab l;
+	IdxTab l;
 	l.CreateList();
-	l.PrintList();
+	l.Prient_Elem_maxk();
+	l.Print_Elem_w();
 	int k;
 	cin >> k;
-	if (l.Find_Node(k)) cout << "yes" << endl;
-	else cout << "no" << endl;
+	l.Insert(k);
+	l.Prient_Elem_maxk();
+	l.Print_Elem_w();
 	cin >> k;
-	if (l.Find_Node(k)) cout << "yes" << endl;
-	else cout << "no" << endl;
+	l.Insert(k);
+	l.Prient_Elem_maxk();
+	l.Print_Elem_w();
 	cin >> k;
-	cout << l.Idx_Node(k) << endl;
+	l.Delete(k);
+	l.Prient_Elem_maxk();
+	l.Print_Elem_w();
 	cin >> k;
-	cout << l.Idx_Node(k) << endl;
-	int w;
-	cin >> k >> w;
-	l.Insert_Node_front(k, w);
-	l.PrintList();
-	cin >> k >> w;
-	l.Insert_Node_back(k, w);
-	l.PrintList();
-	cin >> k;
-	l.Delete_Node(k);
-	l.PrintList();
-	cin >> k;
-	l.Delete_Node(k);
-	l.PrintList();
+	l.Delete(k);
+	l.Prient_Elem_maxk();
+	l.Print_Elem_w();
 	return 0;
 }
 
