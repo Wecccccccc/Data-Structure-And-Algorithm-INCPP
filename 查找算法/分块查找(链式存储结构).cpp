@@ -2,14 +2,13 @@
 using namespace std;
 const int INFMIN = -999999;
 
-
 class Node
 {
 	friend class IdxTab;
 public:
 		Node() :next(nullptr) {};
 private:
-	int w;
+	int  w;
 	Node *next;
 };
 
@@ -17,7 +16,7 @@ class IdxNode
 {
 	friend class IdxTab;
 private:
-	int maxk;
+	int  maxk;
 	Node *fidx;
 };
 
@@ -25,15 +24,33 @@ class IdxTab
 {
 public:
 	void CreateList();
-	void Prient_Elem_maxk();
-	void Print_Elem_w();
-	bool Find_Elem(int k);
-	bool Insert(int k);
-	bool Delete(int k);
+	void Prient_Elem_maxk();//输出查找表的元素
+	void Print_Elem_w();//输出元素
+	bool Find_Elem(int k);//查找值为k的元素
+	bool Insert(int k);//插入元素k
+	bool Delete(int k);//删除元素k
+	~IdxTab();
 private:
 	IdxNode *elem;
 	int len;
 };
+
+IdxTab::~IdxTab()
+{
+	Node *p,*q;
+	for (int i = 0; i <= len; i++)
+	{
+
+		p = elem[i].fidx;
+		if (p == nullptr) continue;
+		q = p->next;
+		delete p;
+		if (q == nullptr) continue;
+		else
+			p = q;
+	}
+	for (int i = 0; i <= len; i++) elem[i].fidx = nullptr;
+}
 
 void IdxTab::CreateList()
 {
@@ -49,10 +66,12 @@ void IdxTab::CreateList()
 	elem = new IdxNode[m + 1];
 	for (int i = 0; i < m + 1; i++) elem[i].fidx = nullptr;
 	int cnt = 0;//计数器
+	cout << "请依次输入要存储的数" << endl;
 	for (int i = 1; i <= len; i++)
 	{
 		elem[i].maxk = INFMIN;
-		for (int j = 1; j <= N && cnt < n; j++)
+		for (int j = 1; j <= N && cnt < n; j++)//因为可能输入的n不够整除，查找表最后一个节点可能连的节点比较少，用
+												//cnt<n，来处理这种情况
 		{
 			cnt++;
 			p = new Node;
@@ -61,14 +80,31 @@ void IdxTab::CreateList()
 			p->w = tmp;
 			p->next = elem[i].fidx;
 			elem[i].fidx = p;
-			if (tmp > elem[i].maxk) elem[i].maxk = tmp;
+			if (tmp > elem[i].maxk) elem[i].maxk = tmp;//更新maxk
 		}
+	}
+	for (int i = 1; i <= len-1; i++)//选择排序给查找表排序
+	{
+		int minv = i;
+		for (int j = i + 1; j <= len; j++)
+			if (elem[minv].maxk > elem[j].maxk)
+				minv = j;
+			if (i != minv)
+			{
+				int tmp = elem[i].maxk;
+				elem[i].maxk = elem[minv].maxk;
+				elem[minv].maxk = tmp;
+				Node *s;
+				s = elem[i].fidx;
+				elem[i].fidx = elem[minv].fidx;
+				elem[minv].fidx = s;
+			}
 	}
 }
 
 bool IdxTab::Find_Elem(int k)
 {
-	if (k > elem[len].maxk) return false;
+	if (k > elem[len].maxk) return false;//如果输入的k直接大于最大的元素，直接return false；
 	int j = 1;
 	while (elem[j].maxk < k) j++;
 	Node *p;
@@ -83,7 +119,7 @@ bool IdxTab::Insert(int k)
 {
 	Node *s;
 	int j = 1;
-	if (k > elem[len].maxk)
+	if (k > elem[len].maxk)//如果k大于最大元素，直接处理查找表最后一个节点
 	{
 		s = new Node;
 		s->w = k;
@@ -108,66 +144,53 @@ bool IdxTab::Delete(int k)
 	while (elem[j].maxk < k) j++;
 	Node *p, *q;
 	p = elem[j].fidx;
-	if ((p->w) == k)
+	bool flag = false;//用flag表示有没有值为k这个元素
+	if ((p->w) == k)//因为没有空白头节点，所以要特别判断一下要删除的是fidx
 	{
+		flag = true;
 		elem[j].fidx = p->next;
 		delete p;
-		if (k == elem[j].maxk)
-		{
-			elem[j].maxk = INFMIN;
-			for (p = elem[j].fidx; p; p = p->next)
-			{
-				if ((p->w) > elem[j].maxk) elem[j].maxk = p->w;
-			}
-			if (j == len) return true;
-			int d = 1;
-			while (elem[d].maxk > elem[d + 1].maxk && d <= len-1)
-			{
-				int tmp_e = elem[d].maxk;
-				elem[d].maxk = elem[d + 1].maxk;
-				elem[d + 1].maxk = tmp_e;
-				Node *s;
-				s = elem[d].fidx;
-				elem[d].fidx = elem[d + 1].fidx;
-				elem[d + 1].fidx = s;
-				d++;
-			}
-			return true;
-		}
 	}
 	else
 		for (q = elem[j].fidx; q->next; q = q->next)
 		{
 			if ((q->next->w) == k)
 			{
+				flag = true;
 				p = q->next;
 				q->next = p->next;
 				delete p;
-				if (k == elem[j].maxk)
-				{
-					elem[j].maxk = INFMIN;
-					for (p = elem[j].fidx; p; p = p->next)
-					{
-						if ((p->w) > elem[j].maxk) elem[j].maxk = p->w;
-					}
-					if (j == len) return true;
-					int d = 1;
-					while (elem[d].maxk > elem[d + 1].maxk && d <= len - 1)
-					{
-						int tmp_e = elem[d].maxk;
-						elem[d].maxk = elem[d + 1].maxk;
-						elem[d + 1].maxk = tmp_e;
-						Node *s;
-						s = elem[d].fidx;
-						elem[d].fidx = elem[d + 1].fidx;
-						elem[d + 1].fidx = s;
-						d++;
-					}
-				}
-				return true;
+				break;
 			}
 		}
-	return false;
+	if (k == elem[j].maxk)//判断删除的是不是更好是值为最大关键字
+	{
+		elem[j].maxk = INFMIN;
+		for (p = elem[j].fidx; p; p = p->next)
+		{
+			if ((p->w) > elem[j].maxk) elem[j].maxk = p->w;
+		}
+		if (j == len) return true;
+		for (int i = 1; i <= len - 1; i++)//选择排序给查找表排序
+		{
+			int minv = i;
+			for (int j = i + 1; j <= len; j++)
+				if (elem[minv].maxk > elem[j].maxk)
+					minv = j;
+			if (i != minv)
+			{
+				int tmp = elem[i].maxk;
+				elem[i].maxk = elem[minv].maxk;
+				elem[minv].maxk = tmp;
+				Node *s;
+				s = elem[i].fidx;
+				elem[i].fidx = elem[minv].fidx;
+				elem[minv].fidx = s;
+			}
+		}
+		if (flag) return true;
+		return false;
+	}
 }
 
 void IdxTab::Print_Elem_w()
@@ -213,7 +236,4 @@ int main()
 	l.Print_Elem_w();
 	return 0;
 }
-
-
-
 
