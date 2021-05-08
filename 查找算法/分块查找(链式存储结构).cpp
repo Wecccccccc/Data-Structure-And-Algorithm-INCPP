@@ -6,7 +6,7 @@ class Node
 {
 	friend class IdxTab;
 public:
-		Node() :next(nullptr) {};
+	Node() :next(nullptr) {};
 private:
 	int  w;
 	Node *next;
@@ -37,7 +37,7 @@ private:
 
 IdxTab::~IdxTab()
 {
-	Node *p,*q;
+	Node *p, *q;
 	for (int i = 0; i <= len; i++)
 	{
 
@@ -76,41 +76,50 @@ void IdxTab::CreateList()
 			cnt++;
 			p = new Node;
 			int tmp;
-			cin >>tmp;
+			cin >> tmp;
 			p->w = tmp;
 			p->next = elem[i].fidx;
 			elem[i].fidx = p;
 			if (tmp > elem[i].maxk) elem[i].maxk = tmp;//更新maxk
 		}
 	}
-	for (int i = 1; i <= len-1; i++)//选择排序给查找表排序
+	for (int i = 1; i <= len - 1; i++)//选择排序给查找表排序
 	{
 		int minv = i;
 		for (int j = i + 1; j <= len; j++)
 			if (elem[minv].maxk > elem[j].maxk)
 				minv = j;
-			if (i != minv)
-			{
-				int tmp = elem[i].maxk;
-				elem[i].maxk = elem[minv].maxk;
-				elem[minv].maxk = tmp;
-				Node *s;
-				s = elem[i].fidx;
-				elem[i].fidx = elem[minv].fidx;
-				elem[minv].fidx = s;
-			}
+		if (i != minv)
+		{
+			int tmp = elem[i].maxk;
+			elem[i].maxk = elem[minv].maxk;
+			elem[minv].maxk = tmp;
+			Node *s;
+			s = elem[i].fidx;
+			elem[i].fidx = elem[minv].fidx;
+			elem[minv].fidx = s;
+		}
 	}
 }
 
 bool IdxTab::Find_Elem(int k)
 {
+	Node *p;
 	if (k > elem[len].maxk) return false;//如果输入的k直接大于最大的元素，直接return false；
 	int j = 1;
-	while (elem[j].maxk < k) j++;
-	Node *p;
-	for (p = elem[j].fidx;p;p = p->next)
+	if (k < elem[j].maxk)
 	{
-		if ((p->w) == k) return true;
+		for (int i = 1; i <= len; i++)
+			for (p = elem[i].fidx; p; p = p->next)
+				if ((p->w) == k) return true;
+	}
+	else
+	{
+		while (elem[j].maxk < k) j++;
+		for (p = elem[j].fidx; p; p = p->next)
+		{
+			if ((p->w) == k) return true;
+		}
 	}
 	return false;
 }
@@ -234,6 +243,13 @@ int main()
 	l.Delete(k);
 	l.Prient_Elem_maxk();
 	l.Print_Elem_w();
+	cin >> k;
+	if (l.Find_Elem(k)) cout << "yes" << endl;
+	else cout << "no" << endl;
+	cin >> k;
+	if (l.Find_Elem(k)) cout << "yes" << endl;
+	else cout << "no" << endl;
 	return 0;
 }
+
 
